@@ -1,0 +1,9 @@
+*/node_modules
+*/node_modules/*
+plans.txt
+
+
+
+# any js file compiled from the ts input
+*/dist/*
+*/dist
