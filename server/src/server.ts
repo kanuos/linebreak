@@ -3,7 +3,7 @@ import {config} from "dotenv"
 import express , { Application } from "express";
 import AuthRouteHandler from "./_Routes/AuthRoutes"
 import dbConfig from "./_Models/dbInit";
-
+import { errorHandler } from "./_Middlewares/ErrorHandler"
 // intialized the environment config to read process.env  
 // destructure the environment variables
 config();
@@ -27,8 +27,10 @@ else {
     process.exit(1)
 }
 
-// route middlewares
+// custom middlewares
 app.use("/auth", AuthRouteHandler)
+app.use(errorHandler)
+
 
 
 // app/server listening to incoming http requests on PORT
