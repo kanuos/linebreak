@@ -7,3 +7,7 @@ plans.txt
 # any js file compiled from the ts input
 */dist/*
 */dist
+
+# environment variables and secrets
+.env
+*/.env
