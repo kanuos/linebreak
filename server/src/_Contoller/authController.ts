@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { handleLogin, handleRegister } from "../_Services/authServices";
+import { handleLogin, handleRegister, generateJWT, handleLogout, setCookie } from "../_Services/authServices";
 import {IAuthResponse} from "../_Utils/Interfaces/authInterfaces"
 import { loginValidator, registerValidator } from "../_Utils/Validator/authValidator";
 
@@ -91,6 +91,12 @@ async function loginController(req: Request, res : Response) {
             message : 'Logged in successfully',
             payload
         }
+
+        // generate access and refresh tokens
+        const { access, refresh } = generateJWT(payload)
+        
+        // add cookie to res
+        setCookie(res, access, refresh)
         return res.status(status).json(responseObject)
     } 
     catch (error : any) {
@@ -105,7 +111,45 @@ async function loginController(req: Request, res : Response) {
 }
 
 
+/**
+ * @description
+ * - Handles incoming login request.
+ * - Checks for body's pre-defined formation
+ * - validates incoming credentials constraints
+ * - performs login services upon successful validation
+ * - ON SUCCESS 
+ *      returns login credentials (JWT) as well as payload
+ * - ON FAILURE
+ *      returns error object
+ * @param email
+ *      - existing user's valid email ID
+ * @param password
+ *      - plain text password following constraints
+ *  
+ * @returns 
+ *      - response object along with a valid HTTP code
+ */
+async function logoutController(_: Request, res : Response) {
+    try {
+
+        let success = await handleLogout(res);
+        if (!success) {
+            throw new Error("Something went wrong")
+        }
+        return res.status(200).json({
+            message : "logged out successfully"
+        })
+    } 
+    catch (error : any) {
+        return res.status(403).json({
+            message: error.message
+        })
+    }
+}
+
+
 export default {
     login : loginController,
-    register : registerController
+    register : registerController,
+    logout : logoutController
 }

@@ -13,3 +13,14 @@ export interface ILoginUser {
 export interface IRegisterUser extends ILoginUser{
     name : String,
 }
+
+
+export interface IJwtPayload {
+    _id     : String | Number,
+    email   : String,
+    exp?    : Number
+}
+
+export interface IUser {
+    email : String, password : String, name : String, _id : String
+}

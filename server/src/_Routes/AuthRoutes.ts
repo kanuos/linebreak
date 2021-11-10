@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authController from "../_Contoller/authController";
+import { needsAuthorization, preventAuthorizedUsers } from "../_Middlewares/AuthMiddleware";
 const auth = Router()
 
 
@@ -22,7 +23,7 @@ const auth = Router()
  * @param password  User's plain text password which was used to registration
  */
 
-auth.post("/login", authController.login)
+auth.post("/login", preventAuthorizedUsers, authController.login)
 
 /**
  * @description
@@ -42,7 +43,21 @@ auth.post("/login", authController.login)
  * @param password  User's plain text password which was used to registration
  */
 
-auth.post("/register", authController.register)
+auth.post("/register", preventAuthorizedUsers, authController.register)
+
+/**
+ * @description
+ * - Handles the incoming request to logout logged user
+ * 
+ * - On FAILURE returns corresponding error messages
+ * - URL : /auth/logout
+ * 
+ * - UN authorized users are not allowed to visit page
+ * @access private
+ * @method  POST
+ */
+
+auth.post("/logout", needsAuthorization, authController.logout)
 
 
 
