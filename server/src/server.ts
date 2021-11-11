@@ -2,6 +2,7 @@
 import {config} from "dotenv"
 import express , { Application } from "express";
 import AuthRouteHandler from "./_Routes/AuthRoutes"
+import ProfileRouteHandler from "./_Routes/ProfileRoutes"
 import dbConfig from "./_Models/dbInit";
 import { errorHandler } from "./_Middlewares/ErrorHandler"
 // intialized the environment config to read process.env  
@@ -29,6 +30,7 @@ else {
 
 // custom middlewares
 app.use("/auth", AuthRouteHandler)
+app.use("/api/", ProfileRouteHandler)
 app.use(errorHandler)
 
 

@@ -12,8 +12,8 @@ const COOKIE_NAMES = {
     refresh : "lb_rt"
 }
 const COOKIE_DURATION = {
-    access : "1m",
-    refresh : "5m"
+    access : "10m",
+    refresh : "7d"
 }
 const COOKIE_OPTIONS = {
     httpOnly : true,
@@ -39,7 +39,7 @@ export async function handleRegister(
         throw new Error("Email already taken")
     }
     
-    const hashedPassword = await hash(password as string, SALT);
+    const hashedPassword = await hashPassword(password as string);
 
     const newUser = {
         email,
@@ -279,6 +279,15 @@ export function checkValidity(token : string, type : string) : {valid : boolean,
         }
     } 
     catch (error : any) {
-        throw new Error(error.name)
+        return {
+            valid : false,
+            payload : error.name
+        }
      }
+}
+
+
+
+export async function hashPassword(password : string) : Promise<string>{
+    return await hash(password, SALT);
 }

@@ -29,45 +29,39 @@ export function preventAuthorizedUsers(req: Request, res: Response, next: NextFu
         const isValidAT = checkValidity(at as string, "access"), isValidRT = checkValidity(rt as string, "refresh")
 
         // case 1: 
-        // access token is valid but refresh token is not valid
-        // clear cookies and allow user to visit route
-        if (isValidAT.valid && !isValidRT.valid) {
-            clearTokensFromCookie(res)
-            return next();
+        // access token is valid and refresh token is valid
+        // user is logged in => prevent user to visit route
+        if (isValidAT.valid && isValidRT.valid) {
+            req.body.loggedUser = isValidRT.payload
+            throw new Error("already logged in")
         }
         // case 2:
-        // access token is valid and refresh token is valid
-        // logged user not allowed to visit route
-        if (isValidAT.valid && isValidRT.valid) {
-            throw new Error("logged user not allowed to visit route")
-        }
-
-        // case 3:
         // refresh token is valid but access token is invalid
-        // if refresh token payload is malformed clear cookies and allow users to visit page
-        // generate new token pairs with refresh token's payload
-        // attach new tokens to cookies
         // logged user not allowed to visit route
-        if (isValidRT.valid && !isValidAT.valid) {
-            if (!isValidRT.payload) {
-                clearTokensFromCookie(res)
-                return next();
-            }
-            const payload = isValidRT.payload as JwtPayload;
+        if (!isValidAT.valid && (isValidRT.valid && Boolean(isValidRT.payload))) {
+            const payload = {...isValidRT.payload as JwtPayload};
+            req.body.loggedUser = isValidRT.payload
             delete payload.exp;
             delete payload.iat;
             const { access, refresh } = generateJWT(payload);
             setCookie(res, access, refresh)
-            throw new Error("new tokens created. You are still logged in")
+            
+            throw new Error("logged user not allowed to visit route")
         }
-        // case 4:
-        // both refresh and access tokens have expired
-        // clear cookies and allow user to visit route
-        if (!isValidRT.valid && !isValidAT.valid) {
+        // case 3:
+        // refresh token is invalid
+        // clear cookies
+        // logged user not allowed to visit route
+        if (!isValidRT.valid) {
             clearTokensFromCookie(res)
             return next()
+         }
+        // case 4:
+        // both refresh and access tokens are valid
+        // clear cookies and allow user to visit route
+        if (!isValidRT.valid && !isValidAT.valid) {
+            throw new Error("logged user cannot visit route")
         }
-        throw new Error("logged user cannot visit route")
     } 
     catch (error : any) {
         if (JWT_ERRORS.includes(error.message)) {
@@ -104,42 +98,32 @@ export function preventAuthorizedUsers(req: Request, res: Response, next: NextFu
         const isValidAT = checkValidity(at as string, "access"), isValidRT = checkValidity(rt as string, "refresh")
 
         // case 1: 
-        // access token is valid but refresh token is not valid
-        // clear cookies and allow user to visit route
-        if (isValidAT.valid && !isValidRT.valid) {
-            throw new Error("Malformed token")
+        // refresh token is invalid
+        // clear cookies and prevent user from visiting route
+        if (!isValidRT.valid || !isValidRT.payload) {
+            clearTokensFromCookie(res)
+            throw new Error(isValidRT.payload as string)
         }
-        // case 2:
-        // access token is valid and refresh token is valid
-        // logged user not allowed to visit route
-        if (isValidAT.valid && isValidRT.valid) {
-            return next();
-        }
-
-        // case 3:
-        // refresh token is valid but access token is invalid
-        // if refresh token payload is malformed clear cookies and allow users to visit page
-        // generate new token pairs with refresh token's payload
-        // attach new tokens to cookies
-        // logged user not allowed to visit route
-        if (isValidRT.valid && !isValidAT.valid) {
-            if (!isValidRT.payload) {
-                throw new Error("Invalid payload")
-            }
-            const payload = isValidRT.payload as JwtPayload;
+        // case 2: 
+        // refresh token is valid
+        // access token is invalid
+        // generate new tokens and set cookies and allow user to visit
+        if (!isValidAT.valid) {
+            const payload = {...isValidRT.payload as JwtPayload};
+            req.body.loggedUser = isValidRT.payload
             delete payload.exp;
             delete payload.iat;
-            const { access, refresh } = generateJWT(payload);
+            const {access, refresh} = generateJWT(payload)
             setCookie(res, access, refresh)
             return next()
-        }
-        // case 4:
-        // both refresh and access tokens have expired
-        // clear cookies and allow user to visit route
-        if (!isValidRT.valid && !isValidAT.valid) {
-            throw new Error("Expired/malformed tokens")
-        }
-        throw new Error("Unauthorized")
+        }        
+        // case 3: 
+        // refresh token is valid
+        // access token is valid
+        // allow user to visit route
+        req.body.loggedUser = isValidRT.payload
+        return next()
+        
     } 
     catch (error : any) {
         clearTokensFromCookie(res)
